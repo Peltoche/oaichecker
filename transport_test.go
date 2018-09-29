@@ -1,14 +1,31 @@
 package oaichecker
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+type mockTransport struct {
+	mock.Mock
+}
+
+func (t *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	args := t.Called(req)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*http.Response), args.Error(1)
+}
 
 func resBody(t *testing.T, res *http.Response) string {
 	body, err := ioutil.ReadAll(res.Body)
@@ -22,21 +39,65 @@ func newServer(handlerFunc func(http.ResponseWriter, *http.Request)) *httptest.S
 }
 
 func Test_Transport_implements_RoundTripper(t *testing.T) {
-	assert.Implements(t, (*http.RoundTripper)(nil), NewTransport())
+	assert.Implements(t, (*http.RoundTripper)(nil), NewTransport(nil))
 }
 
-func Test_Transport_emit_the_request(t *testing.T) {
+func Test_Transport_with_a_valid_request(t *testing.T) {
 	ts := newServer(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("some-response"))
 	})
 	defer ts.Close()
 
+	specs, err := NewSpecsFromFile("./dataset/petstore_minimal.json")
+	require.NoError(t, err)
+
 	client := http.Client{
-		Transport: NewTransport(),
+		Transport: NewTransport(specs),
 	}
 
-	res, err := client.Get(ts.URL)
+	res, err := client.Get(ts.URL + "/pets")
 
 	assert.NoError(t, err)
 	assert.Equal(t, "some-response", resBody(t, res))
+}
+
+func Test_Transport_with_a_transport_error(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore_minimal.json")
+	require.NoError(t, err)
+
+	mockInnerTransport := new(mockTransport)
+	mockInnerTransport.On("RoundTrip", mock.Anything).Return(nil, errors.New("some-error")).Once()
+
+	checkerTransport := NewTransport(specs)
+	checkerTransport.Transport = mockInnerTransport
+
+	client := http.Client{
+		Transport: checkerTransport,
+	}
+
+	res, err := client.Get("http://foobar/pets")
+
+	assert.Nil(t, res)
+	assert.EqualError(t, err, "Get http://foobar/pets: some-error")
+
+	mockInnerTransport.AssertExpectations(t)
+}
+
+func Test_Transport_with_an_analyzer_error(t *testing.T) {
+	ts := newServer(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("some-response"))
+	})
+	defer ts.Close()
+
+	specs, err := NewSpecsFromFile("./dataset/petstore_minimal.json")
+	require.NoError(t, err)
+
+	client := http.Client{
+		Transport: NewTransport(specs),
+	}
+
+	res, err := client.Get(ts.URL + "/invalid-path")
+
+	assert.Nil(t, res)
+	assert.EqualError(t, err, fmt.Sprintf("Get %s/invalid-path: operation not defined inside the specs", ts.URL))
 }
