@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -100,4 +101,26 @@ func Test_Transport_with_an_analyzer_error(t *testing.T) {
 
 	assert.Nil(t, res)
 	assert.EqualError(t, err, fmt.Sprintf("Get %s/invalid-path: operation not defined inside the specs", ts.URL))
+}
+
+func Test_Transport_with_a_body(t *testing.T) {
+	ts := newServer(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("some-response"))
+	})
+	defer ts.Close()
+
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	client := http.Client{
+		Transport: NewTransport(specs),
+	}
+
+	res, err := client.Post(ts.URL+"/pet", "application/json", strings.NewReader(`{
+		"name": "foobar",
+		"photoUrls": ["some-url"]
+	}`))
+
+	assert.NoError(t, err)
+	assert.Equal(t, "some-response", resBody(t, res))
 }

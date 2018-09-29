@@ -1,15 +1,19 @@
 package oaichecker
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/go-openapi/analysis"
+	"github.com/go-openapi/spec"
+	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/validate"
 )
 
 type Analyzer struct {
 	analyzer *analysis.Spec
+	schema   *spec.Schema
 }
 
 func NewAnalyzer(specs *Specs) *Analyzer {
@@ -18,7 +22,8 @@ func NewAnalyzer(specs *Specs) *Analyzer {
 	}
 
 	return &Analyzer{
-		analyzer: analysis.New(specs.document.OrigSpec()),
+		analyzer: specs.document.Analyzer,
+		schema:   specs.document.Schema(),
 	}
 }
 
@@ -36,7 +41,47 @@ func (t *Analyzer) Analyze(req *http.Request) error {
 		return errors.New("operation not defined inside the specs")
 	}
 
-	fmt.Printf("operation: %#v\n", operation)
+	for _, param := range operation.Parameters {
+		var err error
+
+		switch param.In {
+		case "body":
+			err = t.validateBodyParameter(req, &param)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (t *Analyzer) validateBodyParameter(req *http.Request, param *spec.Parameter) error {
+	bodyReader, err := req.GetBody()
+	if err != nil {
+		return err
+	}
+
+	input := map[string]interface{}{}
+	err = json.NewDecoder(bodyReader).Decode(&input)
+	if err != nil {
+		return err
+	}
+
+	paramRef := param.ParamProps.Schema.Ref.String()
+
+	var schema *spec.Schema
+	for _, def := range t.analyzer.AllDefinitions() {
+		if paramRef == def.Ref.String() {
+			schema = def.Schema
+			break
+		}
+	}
+
+	err = validate.AgainstSchema(schema, input, strfmt.Default)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
