@@ -89,3 +89,40 @@ func Test_Analyzer_Analyze_with_invalid_body_format(t *testing.T) {
 
 	assert.EqualError(t, err, "invalid character 'o' in literal null (expecting 'u')")
 }
+
+func Test_Analyzer_Analyze_with_query_format(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/findByStatus", nil)
+	require.NoError(t, err)
+
+	q := req.URL.Query()
+	q.Set("status", "available")
+	req.URL.RawQuery = q.Encode()
+
+	err = analyzer.Analyze(req)
+
+	assert.NoError(t, err)
+}
+
+func Test_Analyzer_Analyze_with_invalid_query_format(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/findByStatus", nil)
+	require.NoError(t, err)
+
+	q := req.URL.Query()
+	q.Set("status", "invalid-enum-value")
+	req.URL.RawQuery = q.Encode()
+
+	err = analyzer.Analyze(req)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		"status.0 in query should be one of [available pending sold]")
+}
