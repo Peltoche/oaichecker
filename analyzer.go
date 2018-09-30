@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-openapi/analysis"
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware/denco"
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
@@ -87,6 +88,8 @@ func (t *Analyzer) Analyze(req *http.Request) error {
 			err = t.validateBodyParameter(req, &param)
 		case "query":
 			err = t.validateQueryParameter(req, &param)
+		case "formData":
+			err = t.validateFormDataParameter(req, &param)
 		}
 		if err != nil {
 			return err
@@ -145,6 +148,29 @@ func (t *Analyzer) validatePathParameter(pathParams denco.Params, param *spec.Pa
 		if err == nil {
 			res = nParam
 		}
+	}
+
+	errs := validate.NewParamValidator(param, strfmt.Default).Validate(res)
+	if errs != nil {
+		return errs.AsError()
+	}
+
+	return nil
+}
+
+func (t *Analyzer) validateFormDataParameter(req *http.Request, param *spec.Parameter) error {
+
+	var res interface{}
+
+	if param.Type == "file" {
+		data, header, _ := req.FormFile(param.Name)
+
+		res = runtime.File{
+			Data:   data,
+			Header: header,
+		}
+	} else {
+		res = req.PostFormValue(param.Name)
 	}
 
 	errs := validate.NewParamValidator(param, strfmt.Default).Validate(res)
