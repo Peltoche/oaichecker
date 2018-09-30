@@ -90,7 +90,7 @@ func Test_Analyzer_Analyze_with_invalid_body_format(t *testing.T) {
 	assert.EqualError(t, err, "invalid character 'o' in literal null (expecting 'u')")
 }
 
-func Test_Analyzer_Analyze_with_query_format(t *testing.T) {
+func Test_Analyzer_Analyze_with_query_parameters(t *testing.T) {
 	specs, err := NewSpecsFromFile("./dataset/petstore.json")
 	require.NoError(t, err)
 
@@ -108,7 +108,7 @@ func Test_Analyzer_Analyze_with_query_format(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func Test_Analyzer_Analyze_with_invalid_query_format(t *testing.T) {
+func Test_Analyzer_Analyze_with_invalid_query_parameters(t *testing.T) {
 	specs, err := NewSpecsFromFile("./dataset/petstore.json")
 	require.NoError(t, err)
 
@@ -125,4 +125,33 @@ func Test_Analyzer_Analyze_with_invalid_query_format(t *testing.T) {
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"status.0 in query should be one of [available pending sold]")
+}
+
+func Test_Analyzer_Analyze_with_path_parameters(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/42", nil)
+	require.NoError(t, err)
+
+	err = analyzer.Analyze(req)
+
+	assert.NoError(t, err)
+}
+
+func Test_Analyzer_Analyze_with_invalid_path_parameters(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/not-a-number", nil)
+	require.NoError(t, err)
+
+	err = analyzer.Analyze(req)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		"petId in path must be of type integer: \"string\"")
 }
