@@ -163,7 +163,8 @@ func Test_Analyzer_Analyze_with_formData_file(t *testing.T) {
 	_, err = fileWriter.Write([]byte("some-data"))
 	require.NoError(t, err)
 
-	mp.Close()
+	err = mp.Close()
+	require.NoError(t, err)
 
 	req, err := http.NewRequest("POST", "/pet/32/uploadImage", &buf)
 	require.NoError(t, err)
