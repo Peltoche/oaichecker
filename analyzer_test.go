@@ -148,6 +148,7 @@ func Test_Analyzer_Analyze_with_path_parameters(t *testing.T) {
 	analyzer := NewAnalyzer(specs)
 
 	req, err := http.NewRequest("GET", "/pet/42", nil)
+	req.Header.Set("userID", "some-id")
 	require.NoError(t, err)
 
 	err = analyzer.Analyze(req)
@@ -162,6 +163,7 @@ func Test_Analyzer_Analyze_with_invalid_path_parameters(t *testing.T) {
 	analyzer := NewAnalyzer(specs)
 
 	req, err := http.NewRequest("GET", "/pet/not-a-number", nil)
+	req.Header.Set("userID", "42")
 	require.NoError(t, err)
 
 	err = analyzer.Analyze(req)
@@ -246,4 +248,34 @@ func Test_Analyzer_Analyze_with_missing_formData_field(t *testing.T) {
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"additionalMetadata in formData is required")
+}
+
+func Test_Analyzer_Analyze_with_header(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/32", nil)
+	require.NoError(t, err)
+	req.Header.Set("userID", "42")
+
+	err = analyzer.Analyze(req)
+
+	assert.NoError(t, err)
+}
+
+func Test_Analyzer_Analyze_with_missing_header(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/32", nil)
+	require.NoError(t, err)
+
+	err = analyzer.Analyze(req)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		"userID in header is required")
 }

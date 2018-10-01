@@ -248,6 +248,13 @@
                     "application/json"
                 ],
                 "parameters": [
+					{
+						"name": "userID",
+						"in": "header",
+						"description": "",
+						"required": true,
+						"type": "string"
+					},
                     {
                         "name": "petId",
                         "in": "path",

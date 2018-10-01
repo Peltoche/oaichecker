@@ -81,6 +81,8 @@ func (t *Analyzer) Analyze(req *http.Request) error {
 		switch param.In {
 		case "path":
 			err = t.validatePathParameter(pathParams, &param)
+		case "header":
+			err = t.validateHeaderParameter(req, &param)
 		case "body":
 			err = t.validateBodyParameter(req, &param)
 		case "query":
@@ -121,6 +123,15 @@ func (t *Analyzer) validateBodyParameter(req *http.Request, param *spec.Paramete
 	err = validate.AgainstSchema(schema, input, strfmt.Default)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (t *Analyzer) validateHeaderParameter(req *http.Request, param *spec.Parameter) error {
+	errs := validate.NewParamValidator(param, strfmt.Default).Validate(req.Header.Get(param.Name))
+	if errs != nil {
+		return errs.AsError()
 	}
 
 	return nil
