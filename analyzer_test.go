@@ -127,6 +127,20 @@ func Test_Analyzer_Analyze_with_invalid_query_parameters(t *testing.T) {
 		"status.0 in query should be one of [available pending sold]")
 }
 
+func Test_Analyzer_Analyze_with_unhandled_method(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("OPTION", "/pet/42", nil)
+	require.NoError(t, err)
+
+	err = analyzer.Analyze(req)
+
+	assert.EqualError(t, err, "operation not defined inside the specs")
+}
+
 func Test_Analyzer_Analyze_with_path_parameters(t *testing.T) {
 	specs, err := NewSpecsFromFile("./dataset/petstore.json")
 	require.NoError(t, err)
