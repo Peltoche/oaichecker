@@ -40,7 +40,7 @@ func newServer(handlerFunc func(http.ResponseWriter, *http.Request)) *httptest.S
 }
 
 func Test_Transport_implements_RoundTripper(t *testing.T) {
-	assert.Implements(t, (*http.RoundTripper)(nil), NewTransport(nil))
+	assert.Implements(t, (*http.RoundTripper)(nil), &Transport{})
 }
 
 func Test_Transport_with_a_valid_request(t *testing.T) {
