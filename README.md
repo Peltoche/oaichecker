@@ -1,3 +1,4 @@
+[![license](http://img.shields.io/badge/license-Apache%20v2-orange.svg)](https://raw.githubusercontent.com/Peltoche/oaichecker/master/LICENSE)
 [![Build Status](https://travis-ci.org/Peltoche/oaichecker.svg?branch=master)](https://travis-ci.org/Peltoche/oaichecker)
 [![GoDoc](https://godoc.org/github.com/Peltoche/oaichecker?status.svg)](http://godoc.org/github.com/Peltoche/oaichecker)
 [![codecov](https://codecov.io/gh/Peltoche/oaichecker/branch/master/graph/badge.svg)](https://codecov.io/gh/Peltoche/oaichecker)
