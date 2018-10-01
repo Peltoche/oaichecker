@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/Peltoche/oaichecker.svg?branch=master)](https://travis-ci.org/Peltoche/oaichecker)
+
+
 # OpenAPI Checker
 
 Run you server tests and at the same time check if you tests match with you OpenAPI specs.
