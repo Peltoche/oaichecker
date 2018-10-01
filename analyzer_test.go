@@ -11,6 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_NewAnalyzer_Analyze_with_specs(t *testing.T) {
+	assert.Panics(t, func() {
+		_ = NewAnalyzer(nil)
+	})
+}
+
 func Test_Analyzer_Analyze_with_no_request(t *testing.T) {
 	specs, err := NewSpecsFromFile("./dataset/petstore_minimal.json")
 	require.NoError(t, err)
