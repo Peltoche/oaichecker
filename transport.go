@@ -20,7 +20,10 @@ func NewTransport(specs *Specs) *Transport {
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	var err error
+	var (
+		err  error
+		body []byte
+	)
 
 	// GetBody is an optional func to return a new copy of Body
 	switch req.Body.(type) {
@@ -29,7 +32,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return http.NoBody, nil
 		}
 	default:
-		body, err := ioutil.ReadAll(req.Body)
+		body, err = ioutil.ReadAll(req.Body)
 		if err != nil {
 			return nil, err
 		}

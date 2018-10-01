@@ -45,7 +45,8 @@ func Test_Transport_implements_RoundTripper(t *testing.T) {
 
 func Test_Transport_with_a_valid_request(t *testing.T) {
 	ts := newServer(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("some-response"))
+		_, err := w.Write([]byte("some-response"))
+		require.NoError(t, err)
 	})
 	defer ts.Close()
 
@@ -86,7 +87,8 @@ func Test_Transport_with_a_transport_error(t *testing.T) {
 
 func Test_Transport_with_an_analyzer_error(t *testing.T) {
 	ts := newServer(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("some-response"))
+		_, err := w.Write([]byte("some-response"))
+		require.NoError(t, err)
 	})
 	defer ts.Close()
 
@@ -105,7 +107,8 @@ func Test_Transport_with_an_analyzer_error(t *testing.T) {
 
 func Test_Transport_with_a_body(t *testing.T) {
 	ts := newServer(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("some-response"))
+		_, err := w.Write([]byte("some-response"))
+		require.NoError(t, err)
 	})
 	defer ts.Close()
 
