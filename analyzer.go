@@ -137,8 +137,7 @@ func (t *Analyzer) validateQueryParameter(req *http.Request, param *spec.Paramet
 }
 
 func (t *Analyzer) validatePathParameter(pathParams denco.Params, param *spec.Parameter) error {
-	var res interface{}
-	res = pathParams.Get(param.Name)
+	var res interface{} = pathParams.Get(param.Name)
 	if param.Type == "integer" {
 		nParam, err := strconv.Atoi(pathParams.Get(param.Name))
 		if err == nil {
