@@ -3,6 +3,7 @@ package oaichecker
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -159,8 +160,8 @@ func (t *Analyzer) validateFormDataParameter(req *http.Request, param *spec.Para
 
 	if param.Type == "file" {
 		data, header, err := req.FormFile(param.Name)
-		if err != nil {
-			return err
+		if err != nil && param.ParamProps.Required {
+			return fmt.Errorf("validation failure list:\n%s in formData is required", param.Name)
 		}
 
 		res = runtime.File{

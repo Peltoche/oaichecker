@@ -178,6 +178,7 @@ func Test_Analyzer_Analyze_with_formData_file(t *testing.T) {
 
 	var buf bytes.Buffer
 	mp := multipart.NewWriter(&buf)
+	mp.WriteField("additionalMetadata", "foobar")
 	fileWriter, err := mp.CreateFormFile("file", "file")
 	require.NoError(t, err)
 	_, err = fileWriter.Write([]byte("some-data"))
@@ -194,4 +195,55 @@ func Test_Analyzer_Analyze_with_formData_file(t *testing.T) {
 	err = analyzer.Analyze(req)
 
 	assert.NoError(t, err)
+}
+
+func Test_Analyzer_Analyze_with_missing_formData_file(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	var buf bytes.Buffer
+	mp := multipart.NewWriter(&buf)
+	mp.WriteField("additionalMetadata", "foobar")
+
+	err = mp.Close()
+	require.NoError(t, err)
+
+	req, err := http.NewRequest("POST", "/pet/32/uploadImage", &buf)
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", mp.FormDataContentType())
+
+	err = analyzer.Analyze(req)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		"file in formData is required")
+}
+
+func Test_Analyzer_Analyze_with_missing_formData_field(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	var buf bytes.Buffer
+	mp := multipart.NewWriter(&buf)
+	fileWriter, err := mp.CreateFormFile("file", "file")
+	require.NoError(t, err)
+	_, err = fileWriter.Write([]byte("some-data"))
+	require.NoError(t, err)
+
+	err = mp.Close()
+	require.NoError(t, err)
+
+	req, err := http.NewRequest("POST", "/pet/32/uploadImage", &buf)
+	require.NoError(t, err)
+
+	req.Header.Set("Content-Type", mp.FormDataContentType())
+
+	err = analyzer.Analyze(req)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		"additionalMetadata in formData is required")
 }
