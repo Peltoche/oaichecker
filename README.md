@@ -23,7 +23,7 @@ integrated inside you http.Client from you already existing tests.
 ```go
 import (
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/Peltoche/oaichecker"
+	"github.com/Peltoche/oaichecker"
 )
 
 func Test_Posting_a_valid_pet(t *testing.T) {

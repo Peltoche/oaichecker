@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"gitlab.com/Peltoche/oaichecker"
+	"github.com/Peltoche/oaichecker"
 )
 
 func Example_specs_format_validations() {
