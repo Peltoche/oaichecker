@@ -35,7 +35,7 @@ func Example_post_request_validation() {
 		panic(err)
 	}
 
-	// Create a client which matches the requests/responses agains the given
+	// Create a client which matches the requests/responses against the given
 	// specs.
 	client := http.Client{
 		Transport: oaichecker.NewTransport(specs),
