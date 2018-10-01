@@ -1,14 +1,16 @@
-package oaichecker
+package oaichecker_test
 
 import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"gitlab.com/Peltoche/oaichecker"
 )
 
 func Example_specs_format_validations() {
 	// Load the specs file.
-	specs, err := NewSpecsFromFile("./dataset/petstore_invalid.json")
+	specs, err := oaichecker.NewSpecsFromFile("./dataset/petstore_invalid.json")
 	if err != nil {
 		panic(err)
 	}
@@ -28,7 +30,7 @@ func Example_specs_format_validations() {
 
 func Example_post_request_validation() {
 	// Load the specs file.
-	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	specs, err := oaichecker.NewSpecsFromFile("./dataset/petstore.json")
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +38,7 @@ func Example_post_request_validation() {
 	// Create a client which matches the requests/responses agains the given
 	// specs.
 	client := http.Client{
-		Transport: NewTransport(specs),
+		Transport: oaichecker.NewTransport(specs),
 	}
 
 	// Make a request with a required field missing.
