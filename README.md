@@ -2,6 +2,7 @@
 [![GoDoc](https://godoc.org/github.com/Peltoche/oaichecker?status.svg)](http://godoc.org/github.com/Peltoche/oaichecker)
 [![codecov](https://codecov.io/gh/Peltoche/oaichecker/branch/master/graph/badge.svg)](https://codecov.io/gh/Peltoche/oaichecker)
 [![GolangCI](https://golangci.com/badges/github.com/Peltoche/oaichecker.svg)](https://golangci.com)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Peltoche/oaichecker)](https://goreportcard.com/report/github.com/Peltoche/oaichecker)
 
 
 # OpenAPI Checker
