@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/Peltoche/oaichecker.svg?branch=master)](https://travis-ci.org/Peltoche/oaichecker)
+[![codecov](https://codecov.io/gh/Peltoche/oaichecker/branch/master/graph/badge.svg)](https://codecov.io/gh/Peltoche/oaichecker)
 
 
 # OpenAPI Checker
