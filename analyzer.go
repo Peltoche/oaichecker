@@ -159,7 +159,10 @@ func (t *Analyzer) validateFormDataParameter(req *http.Request, param *spec.Para
 	var res interface{}
 
 	if param.Type == "file" {
-		data, header, _ := req.FormFile(param.Name)
+		data, header, err := req.FormFile(param.Name)
+		if err != nil {
+			return err
+		}
 
 		res = runtime.File{
 			Data:   data,
