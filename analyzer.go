@@ -23,7 +23,7 @@ type Analyzer struct {
 
 func NewAnalyzer(specs *Specs) *Analyzer {
 	if specs == nil {
-		return &Analyzer{}
+		panic("specs is nil")
 	}
 
 	return &Analyzer{
@@ -60,10 +60,6 @@ func createRouter(analyzer *analysis.Spec) *denco.Router {
 }
 
 func (t *Analyzer) Analyze(req *http.Request) error {
-	if t.analyzer == nil {
-		return errors.New("no specs defined")
-	}
-
 	if req == nil {
 		return errors.New("no request defined")
 	}
