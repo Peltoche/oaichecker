@@ -21,16 +21,21 @@ integrated inside you http.Client from you already existing tests.
 ## Example
 
 ```go
+import (
+	"github.com/stretchr/testify/assert"
+	"gitlab.com/Peltoche/oaichecker"
+)
+
 func Test_Posting_a_valid_pet(t *testing.T) {
 	// Loads the specs file.
 	//
 	// It contains only a the specs for the endpoint 'GET /pets'.
-	specs, err := NewSpecsFromFile("./dataset/petstore_minimal.json")
+	specs, err := oaichecker.NewSpecsFromFile("./dataset/petstore_minimal.json")
 	require.NoError(t, err)
 
 	// Create a client which the custom transport
 	client := http.Client{
-		Transport: NewTransport(specs),
+		Transport: oaichecker.NewTransport(specs),
 	}
 
 	// Make the requests as usual.
