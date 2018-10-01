@@ -26,23 +26,29 @@ import (
 	"github.com/Peltoche/oaichecker"
 )
 
-func Test_Posting_a_valid_pet(t *testing.T) {
+var client http.Client
+
+func init() {
 	// Loads the specs file.
 	//
 	// It contains only a the specs for the endpoint 'GET /pets'.
 	specs, err := oaichecker.NewSpecsFromFile("./dataset/petstore_minimal.json")
-	require.NoError(t, err)
+  if err != nil {
+    panic(err)
+  }
 
 	// Create a client which the custom transport
-	client := http.Client{
+	client = http.Client{
 		Transport: oaichecker.NewTransport(specs),
 	}
+}
 
+func Test_Posting_a_valid_pet(t *testing.T) {
 	// Make the requests as usual.
 	//
 	// In this case the request is valid but the specs are not followed because
 	// the endpoint 'POST /v2/pet' is not defined inside the specs, only 'GET /pets'.
-	_, err = client.Post("http://petstore.swagger.io/v2/pet", "application/json", strings.NewReader(`{
+	_, err := client.Post("http://petstore.swagger.io/v2/pet", "application/json", strings.NewReader(`{
 		"name": "doggie",
 		"photoUrls": ["some-url"],
 	}`))
