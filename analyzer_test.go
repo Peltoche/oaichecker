@@ -2,6 +2,7 @@ package oaichecker
 
 import (
 	"bytes"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"strings"
@@ -23,7 +24,7 @@ func Test_Analyzer_Analyze_with_no_request(t *testing.T) {
 
 	analyzer := NewAnalyzer(specs)
 
-	err = analyzer.Analyze(nil)
+	err = analyzer.Analyze(nil, nil)
 
 	assert.EqualError(t, err, "no request defined")
 }
@@ -37,7 +38,7 @@ func Test_Analyzer_Analyze_with_request_not_in_specs(t *testing.T) {
 	req, err := http.NewRequest("GET", "invalid/path", nil)
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	err = analyzer.Analyze(req, nil)
 
 	assert.EqualError(t, err, "operation not defined inside the specs")
 }
@@ -54,7 +55,19 @@ func Test_Analyzer_Analyze_with_body_parameters(t *testing.T) {
 	}`))
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusCreated),
+		StatusCode:    http.StatusCreated,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.NoError(t, err)
 }
@@ -70,7 +83,19 @@ func Test_Analyzer_Analyze_with_invalid_body_parameters(t *testing.T) {
 	}`))
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusCreated),
+		StatusCode:    http.StatusCreated,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		".photoUrls in body is required")
@@ -85,7 +110,19 @@ func Test_Analyzer_Analyze_with_invalid_body_format(t *testing.T) {
 	req, err := http.NewRequest("POST", "/pet", strings.NewReader(`not a json`))
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "invalid character 'o' in literal null (expecting 'u')")
 }
@@ -103,7 +140,21 @@ func Test_Analyzer_Analyze_with_query_parameters(t *testing.T) {
 	q.Set("status", "available")
 	req.URL.RawQuery = q.Encode()
 
-	err = analyzer.Analyze(req)
+	body := `[]`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.NoError(t, err)
 }
@@ -121,7 +172,21 @@ func Test_Analyzer_Analyze_with_invalid_query_parameters(t *testing.T) {
 	q.Set("status", "invalid-enum-value")
 	req.URL.RawQuery = q.Encode()
 
-	err = analyzer.Analyze(req)
+	body := `[]`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"status.0 in query should be one of [available pending sold]")
@@ -136,7 +201,19 @@ func Test_Analyzer_Analyze_with_unhandled_method(t *testing.T) {
 	req, err := http.NewRequest("OPTION", "/pet/42", nil)
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "operation not defined inside the specs")
 }
@@ -151,7 +228,38 @@ func Test_Analyzer_Analyze_with_path_parameters(t *testing.T) {
 	req.Header.Set("userID", "some-id")
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	body := `{
+		"id": 0,
+		"category": {
+			"id": 0,
+			"name": "string"
+		},
+		"name": "doggie",
+		"photoUrls": [
+		"string"
+		],
+		"tags": [
+		{
+			"id": 0,
+			"name": "string"
+		}
+		],
+		"status": "available"
+	}`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.NoError(t, err)
 }
@@ -166,7 +274,19 @@ func Test_Analyzer_Analyze_with_invalid_path_parameters(t *testing.T) {
 	req.Header.Set("userID", "42")
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"petId in path must be of type integer: \"string\"")
@@ -194,7 +314,25 @@ func Test_Analyzer_Analyze_with_formData_file(t *testing.T) {
 
 	req.Header.Set("Content-Type", mp.FormDataContentType())
 
-	err = analyzer.Analyze(req)
+	body := `{
+		"code": 0,
+		"type": "string",
+		"message": "string"
+	}`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.NoError(t, err)
 }
@@ -217,7 +355,19 @@ func Test_Analyzer_Analyze_with_missing_formData_file(t *testing.T) {
 
 	req.Header.Set("Content-Type", mp.FormDataContentType())
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"file in formData is required")
@@ -244,7 +394,19 @@ func Test_Analyzer_Analyze_with_missing_formData_field(t *testing.T) {
 
 	req.Header.Set("Content-Type", mp.FormDataContentType())
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"additionalMetadata in formData is required")
@@ -260,7 +422,19 @@ func Test_Analyzer_Analyze_with_header(t *testing.T) {
 	require.NoError(t, err)
 	req.Header.Set("userID", "42")
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusNotFound),
+		StatusCode:    http.StatusNotFound,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.NoError(t, err)
 }
@@ -274,7 +448,19 @@ func Test_Analyzer_Analyze_with_missing_header(t *testing.T) {
 	req, err := http.NewRequest("GET", "/pet/32", nil)
 	require.NoError(t, err)
 
-	err = analyzer.Analyze(req)
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
 
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"userID in header is required")

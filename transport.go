@@ -52,7 +52,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	err = t.analyzer.Analyze(req)
+	err = t.analyzer.Analyze(req, res)
 	if err != nil {
 		return nil, err
 	}

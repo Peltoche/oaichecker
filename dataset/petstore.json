@@ -70,6 +70,9 @@
                     }
                 ],
                 "responses": {
+					"201": {
+						"description": "Pet created"
+					},
                     "405": {
                         "description": "Invalid input"
                     }

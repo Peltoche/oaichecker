@@ -1,9 +1,11 @@
 package oaichecker
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -60,7 +62,7 @@ func createRouter(analyzer *analysis.Spec) *denco.Router {
 	return r
 }
 
-func (t *Analyzer) Analyze(req *http.Request) error {
+func (t *Analyzer) Analyze(req *http.Request, res *http.Response) error {
 	if req == nil {
 		return errors.New("no request defined")
 	}
@@ -95,7 +97,45 @@ func (t *Analyzer) Analyze(req *http.Request) error {
 		}
 	}
 
-	return nil
+	err := t.validateResponse(res, operation.Responses)
+
+	return err
+}
+
+func (t *Analyzer) validateResponse(res *http.Response, resSpec *spec.Responses) error {
+	for status, response := range resSpec.StatusCodeResponses {
+		if status == res.StatusCode {
+
+			body, err := ioutil.ReadAll(res.Body)
+			if err != nil {
+				return err
+			}
+
+			res.Body = ioutil.NopCloser(bytes.NewReader(body))
+
+			if response.ResponseProps.Schema == nil {
+				if len(body) > 0 {
+					return fmt.Errorf("validation failure list:\nno response body defined inside the specs but have %q", body)
+				}
+				return nil
+			}
+
+			var input interface{}
+			err = json.Unmarshal(body, &input)
+			if err != nil {
+				return fmt.Errorf("failed to parse json body: %s", err)
+			}
+
+			err = validate.AgainstSchema(response.Schema, input, strfmt.Default)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
+	}
+
+	return fmt.Errorf("validation failure list:\nresponse status %s not defined inside the specs", res.Status)
 }
 
 func (t *Analyzer) validateBodyParameter(req *http.Request, param *spec.Parameter) error {
@@ -110,17 +150,7 @@ func (t *Analyzer) validateBodyParameter(req *http.Request, param *spec.Paramete
 		return err
 	}
 
-	paramRef := param.ParamProps.Schema.Ref.String()
-
-	var schema *spec.Schema
-	for _, def := range t.analyzer.AllDefinitions() {
-		if paramRef == def.Ref.String() {
-			schema = def.Schema
-			break
-		}
-	}
-
-	err = validate.AgainstSchema(schema, input, strfmt.Default)
+	err = validate.AgainstSchema(param.Schema, input, strfmt.Default)
 	if err != nil {
 		return err
 	}
