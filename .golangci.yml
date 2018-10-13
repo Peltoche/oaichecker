@@ -7,8 +7,6 @@ linters-settings:
     min-complexity: 25
   maligned:
     suggest-new: true
-  dupl:
-    threshold: 100
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -18,6 +16,7 @@ linters:
   disable:
     - maligned
     - lll
+    - dupl
 
 issues:
   exclude:

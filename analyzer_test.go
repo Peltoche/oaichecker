@@ -64,7 +64,7 @@ func Test_Analyzer_Analyze_with_body_parameters(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -92,7 +92,7 @@ func Test_Analyzer_Analyze_with_invalid_body_parameters(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -119,7 +119,7 @@ func Test_Analyzer_Analyze_with_invalid_body_format(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -140,6 +140,7 @@ func Test_Analyzer_Analyze_with_query_parameters(t *testing.T) {
 	q.Set("status", "available")
 	req.URL.RawQuery = q.Encode()
 
+	// nolint: goconst
 	body := `[]`
 
 	res := &http.Response{
@@ -151,7 +152,7 @@ func Test_Analyzer_Analyze_with_query_parameters(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -172,6 +173,7 @@ func Test_Analyzer_Analyze_with_invalid_query_parameters(t *testing.T) {
 	q.Set("status", "invalid-enum-value")
 	req.URL.RawQuery = q.Encode()
 
+	// nolint: goconst
 	body := `[]`
 
 	res := &http.Response{
@@ -183,7 +185,7 @@ func Test_Analyzer_Analyze_with_invalid_query_parameters(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -210,7 +212,7 @@ func Test_Analyzer_Analyze_with_unhandled_method(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -256,7 +258,7 @@ func Test_Analyzer_Analyze_with_path_parameters(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -283,7 +285,7 @@ func Test_Analyzer_Analyze_with_invalid_path_parameters(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -300,7 +302,8 @@ func Test_Analyzer_Analyze_with_formData_file(t *testing.T) {
 
 	var buf bytes.Buffer
 	mp := multipart.NewWriter(&buf)
-	mp.WriteField("additionalMetadata", "foobar")
+	err = mp.WriteField("additionalMetadata", "foobar")
+	require.NoError(t, err)
 	fileWriter, err := mp.CreateFormFile("file", "file")
 	require.NoError(t, err)
 	_, err = fileWriter.Write([]byte("some-data"))
@@ -329,7 +332,7 @@ func Test_Analyzer_Analyze_with_formData_file(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -345,7 +348,8 @@ func Test_Analyzer_Analyze_with_missing_formData_file(t *testing.T) {
 
 	var buf bytes.Buffer
 	mp := multipart.NewWriter(&buf)
-	mp.WriteField("additionalMetadata", "foobar")
+	err = mp.WriteField("additionalMetadata", "foobar")
+	require.NoError(t, err)
 
 	err = mp.Close()
 	require.NoError(t, err)
@@ -364,7 +368,7 @@ func Test_Analyzer_Analyze_with_missing_formData_file(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -403,7 +407,7 @@ func Test_Analyzer_Analyze_with_missing_formData_field(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -431,7 +435,7 @@ func Test_Analyzer_Analyze_with_header(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -457,7 +461,7 @@ func Test_Analyzer_Analyze_with_missing_header(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -478,6 +482,7 @@ func Test_Analyzer_Analyze_with_unrequired_body(t *testing.T) {
 	}`))
 	require.NoError(t, err)
 
+	// nolint: goconst
 	body := `{}`
 
 	res := &http.Response{
@@ -489,7 +494,7 @@ func Test_Analyzer_Analyze_with_unrequired_body(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -511,6 +516,7 @@ func Test_Analyzer_Analyze_with_unknown_response_status(t *testing.T) {
 	q.Set("status", "available")
 	req.URL.RawQuery = q.Encode()
 
+	// nolint: goconst
 	body := `[]`
 
 	res := &http.Response{
@@ -522,7 +528,7 @@ func Test_Analyzer_Analyze_with_unknown_response_status(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -555,7 +561,7 @@ func Test_Analyzer_Analyze_with_unmarshalable_response_body(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
@@ -578,6 +584,7 @@ func Test_Analyzer_Analyze_with_invalid_response_body(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 
 	// Should be an array
+	// nolint: goconst
 	body := `{}`
 
 	res := &http.Response{
@@ -589,7 +596,7 @@ func Test_Analyzer_Analyze_with_invalid_response_body(t *testing.T) {
 		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
 		ContentLength: int64(len(body)),
 		Request:       req,
-		Header:        make(http.Header, 0),
+		Header:        make(http.Header),
 	}
 
 	err = analyzer.Analyze(req, res)
