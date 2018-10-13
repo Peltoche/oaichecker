@@ -7,11 +7,18 @@ import (
 	"net/http"
 )
 
+// Transport is a http.RoundTripper implementation destined to be injected
+// inside an htttp.Client.Transport.
+//
+// It allows to make HTTP calls as usual but it will intercept the
+// http.Request and http.Response and will validate them against the OpenAPI
+// specs given during instantiation.
 type Transport struct {
 	Transport http.RoundTripper
 	analyzer  *Analyzer
 }
 
+// NewTransport instantiate a new Transport with the given Specs.
 func NewTransport(specs *Specs) *Transport {
 	return &Transport{
 		Transport: http.DefaultTransport,
@@ -19,6 +26,9 @@ func NewTransport(specs *Specs) *Transport {
 	}
 }
 
+// RoundTrip implement http.RoundTripper.
+//
+// If a validation error occures an error will returned with a new Response.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	var (
 		err  error

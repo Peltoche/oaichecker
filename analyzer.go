@@ -18,12 +18,17 @@ import (
 	"github.com/go-openapi/validate"
 )
 
+// Analyzer analyze a pair of http.Request/http.Response with the previously
+// Specs loaded at initialization.
 type Analyzer struct {
 	analyzer *analysis.Spec
 	schema   *spec.Schema
 	router   *denco.Router
 }
 
+// NewAnalyzer instantiate a new Analyzer based on the given Specs.
+//
+// If the specs is nil, the function panics.
 func NewAnalyzer(specs *Specs) *Analyzer {
 	if specs == nil {
 		panic("specs is nil")
@@ -62,6 +67,15 @@ func createRouter(analyzer *analysis.Spec) *denco.Router {
 	return r
 }
 
+// Analyze the given pair of http.Request/http.Response with the previously
+// loaded Specs.
+//
+// This method checks:
+// - If the Operation exists (method / path)
+// - The Parameters defined inside the Operation (path / header / body / query / formData)
+// - The Response (status / body)
+//
+// In case of incorrectess, an error is returned.
 func (t *Analyzer) Analyze(req *http.Request, res *http.Response) error {
 	if req == nil {
 		return errors.New("no request defined")
