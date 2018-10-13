@@ -9,6 +9,9 @@ import (
 	"github.com/go-openapi/validate"
 )
 
+// Specs represent some loaded OpenAPI specs.
+//
+// It can be used inside an Analyzer or a Transport.
 type Specs struct {
 	document *loads.Document
 }
@@ -40,7 +43,7 @@ func NewSpecsFromFile(path string) (*Specs, error) {
 	return &spec, nil
 }
 
-// NewSpecsFromFile load a new raw OpenAPI specifications.
+// NewSpecsFromRaw load a new raw OpenAPI specifications.
 //
 // This specs can be either in JSON or YAML format. Any relatives references
 // ("$ref": "./pet_definition.json" for example) will be resolved based on the
