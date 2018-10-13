@@ -123,7 +123,7 @@ func (t *Analyzer) validateResponse(res *http.Response, resSpec *spec.Responses)
 			var input interface{}
 			err = json.Unmarshal(body, &input)
 			if err != nil {
-				return fmt.Errorf("failed to parse json body: %s", err)
+				return fmt.Errorf("validation failure list:\nfailed to parse response body: %s", err)
 			}
 
 			err = validate.AgainstSchema(response.Schema, input, strfmt.Default)

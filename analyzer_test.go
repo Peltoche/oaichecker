@@ -465,3 +465,135 @@ func Test_Analyzer_Analyze_with_missing_header(t *testing.T) {
 	assert.EqualError(t, err, "validation failure list:\n"+
 		"userID in header is required")
 }
+
+func Test_Analyzer_Analyze_with_unrequired_body(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("POST", "/pet", strings.NewReader(`{
+		"name": "foobar",
+		"photoUrls": ["tutu"]
+	}`))
+	require.NoError(t, err)
+
+	body := `{}`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusCreated),
+		StatusCode:    http.StatusCreated,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		`no response body defined inside the specs but have "{}"`)
+}
+
+func Test_Analyzer_Analyze_with_unknown_response_status(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/findByStatus", nil)
+	require.NoError(t, err)
+
+	q := req.URL.Query()
+	q.Set("status", "available")
+	req.URL.RawQuery = q.Encode()
+
+	body := `[]`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusTeapot),
+		StatusCode:    http.StatusTeapot,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		"response status I'm a teapot not defined inside the specs")
+}
+
+func Test_Analyzer_Analyze_with_unmarshalable_response_body(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/findByStatus", nil)
+	require.NoError(t, err)
+
+	q := req.URL.Query()
+	q.Set("status", "available")
+	req.URL.RawQuery = q.Encode()
+
+	body := `invalid-json`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		"failed to parse response body: invalid character 'i' looking for beginning of value")
+}
+
+func Test_Analyzer_Analyze_with_invalid_response_body(t *testing.T) {
+	specs, err := NewSpecsFromFile("./dataset/petstore.json")
+	require.NoError(t, err)
+
+	analyzer := NewAnalyzer(specs)
+
+	req, err := http.NewRequest("GET", "/pet/findByStatus", nil)
+	require.NoError(t, err)
+
+	q := req.URL.Query()
+	q.Set("status", "available")
+	req.URL.RawQuery = q.Encode()
+
+	// Should be an array
+	body := `{}`
+
+	res := &http.Response{
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Proto:         "HTTP/1.1",
+		ProtoMajor:    1,
+		ProtoMinor:    1,
+		Body:          ioutil.NopCloser(bytes.NewBufferString(body)),
+		ContentLength: int64(len(body)),
+		Request:       req,
+		Header:        make(http.Header, 0),
+	}
+
+	err = analyzer.Analyze(req, res)
+
+	assert.EqualError(t, err, "validation failure list:\n"+
+		` in body must be of type array: "object"`)
+}
