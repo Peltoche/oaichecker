@@ -29,7 +29,8 @@ func Test_NewSpecsFromRaw_with_unmarshalable_content(t *testing.T) {
 	specs, err := NewSpecsFromRaw([]byte("no a valid spec"))
 
 	assert.Nil(t, specs)
-	assert.EqualError(t, err, "analyzed: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `no a va...` into map[interface {}]interface {}")
+	assert.EqualError(t, err, "analyzed: yaml: unmarshal errors:\n"+
+		"  line 1: cannot unmarshal !!str `no a va...` into map[interface {}]interface {}")
 }
 
 func Test_NewSpecsFromFile_with_multi_file_spec_and_invalid_ref_should_fail(t *testing.T) {

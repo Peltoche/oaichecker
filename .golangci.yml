@@ -14,8 +14,6 @@ linters-settings:
 linters:
   enable-all: true
   disable:
-    - maligned
-    - lll
     - dupl
 
 issues:
